@@ -1,11 +1,28 @@
 #include "spcwar.h"
 
-int v[11][11];
+int v[11][11],a=1;
 char ch;
 bool *game;
 ssize_t read_size;
 #define BUFFER_SIZE 1024
 char buffer[BUFFER_SIZE];
+
+void interpreteaza_matrice() {
+    for(int i=1;i<=10;i++) {
+        for(int j=1;j<=10;j++) {
+            if(v[i][j] == 1) {
+                printf(" * ");
+            } else if(v[i][j] == 2) {
+                printf(" # ");
+            } else if(v[i][j] == 3) {
+                printf(" ! ");
+            } else {
+                printf("   ");
+            }
+        }
+        printf("\n");
+    }
+}
 
 void generate(void) {
 
@@ -37,6 +54,22 @@ void disable_raw_mode()
     tcsetattr(0, TCSANOW, &term);
 }
 
+void coboara_nave(_Bool *game) {
+    for(int i=8;i>=1;i--) {
+        for(int j=1;j<=10;j++) {
+            if(v[i][j] == 1 && i+1 == 9) {
+                *game = true;
+                break;
+            } else {
+                v[i+1][j] = v[i][j];
+            }
+        }
+        if(*game == true) {
+            return;
+        }
+    }
+}
+
 bool kbhit()
 {
     int byteswaiting;
@@ -44,7 +77,7 @@ bool kbhit()
     return byteswaiting > 0;
 }
 
-void move_spaceship(_Bool *game){
+void run_game(_Bool *game){
     if(kbhit()) {
         system("stty raw");
         read_size = read(STDIN_FILENO, buffer, BUFFER_SIZE);
@@ -98,16 +131,20 @@ int main(void) {
     system("clear");
 
     generate();
+    interpreteaza_matrice();
 
     do {
+        if(a%100 == 0) {
+            //coboara_nave(&game_over);
+        }
+
         enable_raw_mode();
-        move_spaceship(&game_over);
+        run_game(&game_over);
         disable_raw_mode();
         tcflush(0 , TCIFLUSH);
-        printf(".");
         fflush(stdout);
-        usleep(10 * 1000);
-
+        usleep(50 * 1000);
+        a++;
     } while(!game_over);
 
     return 0;
