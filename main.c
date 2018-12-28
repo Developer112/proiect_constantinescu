@@ -1,15 +1,16 @@
 #include "spcwar.h"
 
-int v[11][11],a=1;
+int a=1;
 char ch;
-bool *game;
 ssize_t read_size;
 #define BUFFER_SIZE 1024
+#define N 20
+int v[N+1][N+1];
 char buffer[BUFFER_SIZE];
 
 void interpreteaza_matrice() {
-    for(int i=1;i<=10;i++) {
-        for(int j=1;j<=10;j++) {
+    for(int i=1;i<=N;i++) {
+        for(int j=1;j<=N;j++) {
             if(v[i][j] == 1) {
                 printf(" * ");
             } else if(v[i][j] == 2) {
@@ -27,15 +28,15 @@ void interpreteaza_matrice() {
 void generate(void) {
 
     for(int i=1;i<=2;i++) {
-        for(int j=1;j<=10;j++) {
+        for(int j=1;j<=N;j++) {
             v[i][j] = 1;
         }
     }
 
-    v[9][5] = 2;
-    v[10][5] = 2;
-    v[10][4] = 2;
-    v[10][6] = 2;
+    v[N-1][N/2] = 2;
+    v[N][N/2] = 2;
+    v[N][N/2 - 1] = 2;
+    v[N][N/2 + 1] = 2;
 }
 
 void enable_raw_mode()
@@ -54,18 +55,50 @@ void disable_raw_mode()
     tcsetattr(0, TCSANOW, &term);
 }
 
-void coboara_nave(_Bool *game) {
-    for(int i=8;i>=1;i--) {
-        for(int j=1;j<=10;j++) {
-            if(v[i][j] == 1 && i+1 == 9) {
-                *game = true;
-                break;
-            } else {
-                v[i+1][j] = v[i][j];
+bool allZero() {
+    for(int i=N-2;i>=1;i--) {
+        for(int j=1;j<=N;j++) {
+            if(v[i][j] == 1) {
+                return false;
             }
         }
-        if(*game == true) {
+    }
+
+    return true;
+}
+
+void move_left() {
+    for(int i=N;i>=N-1;i--) {
+        int x = v[i][1];
+        for(int j=2;j<=N;j++) {
+            v[i][j-1] = v[i][j];
+        }
+        v[i][N] = x;
+    }
+}
+
+void move_right() {
+    for(int i=N;i>=N-1;i--) {
+        int x = v[i][N];
+        for(int j = N-1;j>=1;j--) {
+            v[i][j+1] = v[i][j];
+        }
+        v[i][1] = x;
+    }
+}
+
+void coboara_nave(_Bool *game) {
+
+    for(int j=1;j<=N;j++) {
+        if(v[N-2][j] == 1) {
+            *game = true;
             return;
+        }
+    }
+
+    for(int i=N-3;i>=1;i--) {
+        for(int j=1;j<=N;j++) {
+            v[i+1][j] = v[i][j];
         }
     }
 }
@@ -86,14 +119,25 @@ void run_game(_Bool *game){
             ch = buffer[0];
             switch (ch) {
                 case 'a':
-                    printf("Pressed a! \n");
+                    move_left();
+                    system("clear");
+                    interpreteaza_matrice();
                     break;
                 case 'd':
-                    printf("Pressed d! \n");
+                    move_right();
+                    system("clear");
+                    interpreteaza_matrice();
                     break;
                 case 'e':
                     printf("Exited! \n");
                     *game = true;
+                    break;
+                case ' ':
+                    printf("shoot!");
+                    break;
+                default:
+                    system("clear");
+                    interpreteaza_matrice();
                     break;
             }
         }
@@ -135,7 +179,15 @@ int main(void) {
 
     do {
         if(a%100 == 0) {
-            //coboara_nave(&game_over);
+            if(allZero() == false) {
+                coboara_nave(&game_over);
+                system("clear");
+                interpreteaza_matrice();
+            } else {
+                system("clear");
+                printf("You win!");
+                return 0;
+            }
         }
 
         enable_raw_mode();
@@ -143,7 +195,7 @@ int main(void) {
         disable_raw_mode();
         tcflush(0 , TCIFLUSH);
         fflush(stdout);
-        usleep(50 * 1000);
+        usleep(100000);
         a++;
     } while(!game_over);
 
