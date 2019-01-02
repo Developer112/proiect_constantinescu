@@ -5,6 +5,8 @@ char ch;
 ssize_t read_size;
 #define BUFFER_SIZE 1024
 #define N 20
+#define CN 100
+#define UG 1
 int v[N+1][N+1];
 char buffer[BUFFER_SIZE];
 
@@ -65,6 +67,42 @@ bool allZero() {
     }
 
     return true;
+}
+
+void urca_gloante() {
+    for(int i=2;i<=N-2;i++) {
+        for(int j=1;j<=N;j++) {
+            if(v[i][j] == 3) {
+                if(v[i-1][j] == 1) {
+                    v[i][j] = 0;
+                    v[i-1][j] = 0;
+                } else {
+                    v[i-1][j] = v[i][j];
+                    v[i][j] = 0;
+                }
+            }
+        }
+    }
+}
+
+void trage() {
+    int poz=0;
+    for(int j=1;j<=N;j++) {
+        if(v[N-1][j] == 2) {
+            poz = j;
+            break;
+        }
+    }
+    switch(v[N-2][poz]) {
+        case 1:
+            v[N-2][poz] = 0;
+            break;
+        case 0:
+            v[N-2][poz] = 3;
+            break;
+        default :
+            break;
+    }
 }
 
 void move_left() {
@@ -133,7 +171,9 @@ void run_game(_Bool *game){
                     *game = true;
                     break;
                 case ' ':
-                    printf("shoot!");
+                    trage();
+                    system("clear");
+                    interpreteaza_matrice();
                     break;
                 default:
                     system("clear");
@@ -178,14 +218,20 @@ int main(void) {
     interpreteaza_matrice();
 
     do {
-        if(a%100 == 0) {
+        if(a%UG == 0) {
+            urca_gloante();
+            system("clear");
+            interpreteaza_matrice();
+        }
+
+        if(a%CN == 0) {
             if(allZero() == false) {
                 coboara_nave(&game_over);
                 system("clear");
                 interpreteaza_matrice();
             } else {
                 system("clear");
-                printf("You win!");
+                printf("You win!\n");
                 return 0;
             }
         }
